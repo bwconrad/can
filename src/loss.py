@@ -3,13 +3,21 @@ import torch.distributed as dist
 import torch.nn.functional as F
 
 
-def masked_mse_loss(pred, target, mask, normalize_targets=False):
+def masked_mse_loss(
+    pred: torch.Tensor,
+    target: torch.Tensor,
+    mask: torch.Tensor,
+    normalize_targets: bool = False,
+):
     """MSE loss on masked patches
 
     Args:
-        pred (torch.Tensor): B x num_patches x D tensor of predict patches
-        target (torch.Tensor): B x num_patches x D tensor of target patch values
-        mask (torch.Tensor): B x num_patches binary mask with masked patches marked with 1
+        pred: B x num_patches x D tensor of predict patches
+        target: B x num_patches x D tensor of target patch values
+        mask: B x num_patches binary mask with masked patches marked with 1
+
+    Return:
+        loss: Masked mean square error loss
     """
     # Normalize target pixel values
     if normalize_targets:

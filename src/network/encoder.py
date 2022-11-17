@@ -4,12 +4,15 @@ import timm.models.vision_transformer as vision_transformer
 import torch
 import torch.nn as nn
 from einops import repeat
-from timm.models.layers import weight_init
 
 from src.network.pos_embed import get_2d_sincos_pos_embed
 
 
 class VisionTransformer(vision_transformer.VisionTransformer):
+    """Vision transformer for masked image modeling.
+    Uses fixed sin-cos position embeddings
+    """
+
     def __init__(self, **kwargs):
         super(VisionTransformer, self).__init__(**kwargs)
         assert self.num_prefix_tokens == 1  # Must have cls token
@@ -21,7 +24,7 @@ class VisionTransformer(vision_transformer.VisionTransformer):
         self.init_pos_embed()
 
     def init_pos_embed(self):
-        # Initialize to sin-cos position embedding
+        """Initialize sin-cos position embeddings"""
         pos_embed = get_2d_sincos_pos_embed(
             self.pos_embed.shape[-1],
             int(self.patch_embed.num_patches**0.5),
@@ -30,6 +33,19 @@ class VisionTransformer(vision_transformer.VisionTransformer):
         self.pos_embed.data.copy_(torch.from_numpy(pos_embed).float().unsqueeze(0))
 
     def random_masking(self, x: torch.Tensor, mask_ratio: float):
+        """Randomly mask mask_ratio patches of an image
+
+        Args:
+            x: Tensor of shape B x L x D
+            mask_ratio: Ratio of patches to mask
+
+        Return:
+            x_masked: Tensor of non-masked patches
+            mask: Tensor of size B x L where the positions of masked
+                patches are marked by 1 and else 0
+            idx_unshuffle: Tensor of size B x L with the sorting order
+                to unshuffle patches back to the original order
+        """
         B, L, D = x.shape
 
         # Number of patches to keep
@@ -51,7 +67,7 @@ class VisionTransformer(vision_transformer.VisionTransformer):
 
         return x_masked, mask, idx_unshuffle
 
-    def forward(self, x, mask_ratio=0.75):
+    def forward(self, x: torch.Tensor, mask_ratio: float = 0.75):
         # Patch embed image
         x = self.patch_embed(x)
 
@@ -73,7 +89,7 @@ class VisionTransformer(vision_transformer.VisionTransformer):
         return x, mask, idx_unshuffle
 
 
-def build_encoder(model, **kwargs):
+def build_encoder(model: str, **kwargs):
     try:
         model_fn, patch_size = MODEL_DICT[model]
     except:

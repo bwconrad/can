@@ -1,4 +1,5 @@
 from functools import partial
+from typing import Optional
 
 import torch
 import torch.nn as nn
@@ -53,7 +54,7 @@ class VitDecoder(nn.Module):
 
         self.init_weights(num_patches)
 
-    def init_weights(self, num_patches):
+    def init_weights(self, num_patches: int):
         # Initialize to sin-cos position embedding
         pos_embed = get_2d_sincos_pos_embed(
             self.pos_embed.shape[-1],
@@ -68,7 +69,7 @@ class VitDecoder(nn.Module):
         # All other weights
         self.apply(self._init_weights)
 
-    def _init_weights(self, m):
+    def _init_weights(self, m: nn.Module):
         if isinstance(m, nn.Linear):
             torch.nn.init.xavier_uniform_(m.weight)
             if isinstance(m, nn.Linear) and m.bias is not None:
@@ -77,7 +78,12 @@ class VitDecoder(nn.Module):
             nn.init.constant_(m.bias, 0)
             nn.init.constant_(m.weight, 1.0)
 
-    def forward(self, x, idx_unshuffle, p=None):
+    def forward(
+        self,
+        x: torch.Tensor,
+        idx_unshuffle: torch.Tensor,
+        p: Optional[torch.Tensor] = None,
+    ):
         # Append mask tokens to input
         L = idx_unshuffle.shape[1]
         B, L_unmasked, D = x.shape
@@ -111,7 +117,7 @@ class VitDecoder(nn.Module):
         return x[:, 1:, :]  # Don't return cls token
 
 
-def dec512d8b(patch_size, num_patches, in_dim, **kwargs):
+def dec512d8b(patch_size: int, num_patches: int, in_dim: int, **kwargs):
     return VitDecoder(
         patch_size=patch_size,
         num_patches=num_patches,
@@ -126,7 +132,7 @@ def dec512d8b(patch_size, num_patches, in_dim, **kwargs):
 MODEL_DICT = {"dec512d8b": dec512d8b}
 
 
-def build_decoder(model, **kwargs):
+def build_decoder(model: str, **kwargs):
     try:
         model_fn = MODEL_DICT[model]
     except:

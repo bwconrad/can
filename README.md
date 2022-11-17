@@ -19,6 +19,6 @@ python train.py --accelerator gpu --devices 1 --precision 16  --data.root path/t
 --model.mask_ratio 0.5 --mode.weight_contrast 0.03 --model.weight_recon 0.67 
 --model.weight_denoise 0.3
 ```
-- Run `python train.py --help` to get descriptions for all the options.
+- Run `python train.py --help` for descriptions of all options.
 - `--model.encoder_name` can be one of `vit_tiny_patch16, vit_small_patch16, vit_base_patch16, vit_large_patch16, vit_huge_patch14`.
 

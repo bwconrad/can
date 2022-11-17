@@ -1,5 +1,5 @@
 import os
-from typing import Tuple
+from typing import List, Optional, Tuple
 
 import pytorch_lightning as pl
 import torch
@@ -133,9 +133,14 @@ class CANModel(pl.LightningModule):
         if self.channel_last:
             self = self.to(memory_format=torch.channels_last)
 
-    def patchify(self, x):
+    def patchify(self, x: torch.Tensor):
         """Rearrange image into patches
-        (b, 3, h, w) -> (b, l, patch_size^2 * 3)
+
+        Args:
+            x: Tensor of size (b, 3, h, w)
+
+        Return:
+            x: Tensor of size (b, h*w, patch_size^2 * 3)
         """
         assert x.shape[2] == x.shape[3] and x.shape[2] % self.patch_size == 0
 
@@ -146,9 +151,14 @@ class CANModel(pl.LightningModule):
             p2=self.patch_size,
         )
 
-    def unpatchify(self, x):
+    def unpatchify(self, x: torch.Tensor):
         """Rearrange patches back to an image
-        (b, l, patch_size^2 * 3) -> (b, 3, h, w)
+
+        Args:
+            x: Tensor of size (b, h*w, patch_size^2 * 3)
+
+        Return:
+            x: Tensor of size (b, 3, h, w)
         """
         h = w = int(x.shape[1] ** 0.5)
         return rearrange(
@@ -160,7 +170,7 @@ class CANModel(pl.LightningModule):
             w=w,
         )
 
-    def log_samples(self, inp, pred, mask):
+    def log_samples(self, inp: torch.Tensor, pred: torch.Tensor, mask: torch.Tensor):
         """Log sample images"""
         # Only log up to 16 images
         inp, pred, mask = inp[:16], pred[:16], mask[:16]
@@ -188,8 +198,17 @@ class CANModel(pl.LightningModule):
             self.logger.log_image(key="sample", images=[grid])  # type:ignore
 
     @torch.no_grad()
-    def add_noise(self, x):
-        """Add noise to input image"""
+    def add_noise(self, x: torch.Tensor):
+        """Add noise to input image
+
+        Args:
+            x: Tensor of size (b, c, h, w)
+
+        Return:
+            x_noise: x tensor with added Gaussian noise of size (b, c, h, w)
+            noise: Noise tensor of size (b, c, h, w)
+            std: Noise standard deviation (noise level) tensor of size (b,)
+        """
         # Sample std uniformly from [0, self.noise_std_max]
         std = torch.rand(x.size(0), device=x.device) * self.noise_std_max
 
@@ -201,12 +220,17 @@ class CANModel(pl.LightningModule):
 
         return x_noise, noise, std
 
-    def shared_step(self, x, mode="train", batch_idx=None):
+    def shared_step(
+        self,
+        x: Tuple[torch.Tensor, torch.Tensor],
+        mode: str = "train",
+        batch_idx: Optional[int] = None,
+    ):
         x1, x2 = x
 
         if self.channel_last:
-            x1 = x1.to(memory_format=torch.channels_last)
-            x2 = x2.to(memory_format=torch.channels_last)
+            x1 = x1.to(memory_format=torch.channels_last)  # type:ignore
+            x2 = x2.to(memory_format=torch.channels_last)  # type:ignore
 
         # Add noise to views
         x1_noise, noise1, std1 = self.add_noise(x1)

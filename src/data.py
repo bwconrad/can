@@ -52,8 +52,8 @@ class DuelViewDataModule(pl.LightningDataModule):
             gray_scale_prob: Probability of converting to grayscale
             flip_prob: Probability of applying horizontal flip
             gaussian_prob: Probability of applying Gaussian blurring
-            mean: Image normalization means
-            std: Image normalization standard deviations
+            mean: Image normalization channel means
+            std: Image normalization channel standard deviations
         """
         super().__init__()
         self.save_hyperparameters()
@@ -94,7 +94,7 @@ class DuelViewDataModule(pl.LightningDataModule):
             n_views=2,
         )
 
-    def setup(self, stage="fit"):
+    def setup(self, stage: str = "fit"):
         if stage == "fit":
             dataset = SimpleDataset(self.root, self.transforms)
 
@@ -102,7 +102,7 @@ class DuelViewDataModule(pl.LightningDataModule):
             self.train_dataset, self.val_dataset = data.random_split(
                 dataset,
                 [len(dataset) - self.num_val_samples, self.num_val_samples],
-                generator=torch.Generator().manual_seed(42),
+                generator=torch.Generator().manual_seed(42),  # Fixed seed
             )
 
     def train_dataloader(self):
@@ -145,7 +145,7 @@ class SimpleDataset(data.Dataset):
 
         print(f"Loaded {len(self.paths)} images from {root}")
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int):
         img = Image.open(self.paths[index]).convert("RGB")
         img = self.transforms(img)
         return img
