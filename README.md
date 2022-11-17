@@ -16,7 +16,7 @@ To pretrain a ViT-b/16 network run:
 ```
 python train.py --accelerator gpu --devices 1 --precision 16  --data.root path/to/data/
 --max_epochs 1000 --data.batch_size 256 --model.encoder_name vit_base_patch16
---model.mask_ratio 0.5 --mode.weight_contrast 0.03 --model.weight_recon 0.67 
+--model.mask_ratio 0.5 --model.weight_contrast 0.03 --model.weight_recon 0.67 
 --model.weight_denoise 0.3
 ```
 - Run `python train.py --help` for descriptions of all options.
