@@ -27,7 +27,7 @@ class CANModel(pl.LightningModule):
         decoder_num_heads=16,
         projector_hidden_dim: int = 4096,
         projector_out_dim: int = 128,
-        noise_embed_in_dim: int = 192,
+        noise_embed_in_dim: int = 768,
         noise_embed_hidden_dim: int = 768,
         mask_ratio: float = 0.5,
         norm_pixel_loss: bool = True,
@@ -121,9 +121,10 @@ class CANModel(pl.LightningModule):
             nn.ReLU(),
             nn.Linear(self.projector_hidden_dim, self.projector_out_dim),
         )
+        # Based on updated openreview version (as of Nov 17, 2022), the MLP is two layers
+        # without BN (maybe?) and input and hidden dims the same as the encoder embedding
         self.noise_embed = nn.Sequential(
             nn.Linear(self.noise_embed_in_dim, self.noise_embed_hidden_dim),
-            nn.BatchNorm1d(self.noise_embed_hidden_dim),
             nn.ReLU(),
             nn.Linear(self.noise_embed_hidden_dim, self.encoder.embed_dim),
         )
