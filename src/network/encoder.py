@@ -177,15 +177,3 @@ MODEL_DICT = {
     "vit_large_patch16": (vit_large_patch16, 16),
     "vit_huge_patch14": (vit_huge_patch14, 14),
 }
-
-
-if __name__ == "__main__":
-    from decoder import VitDecoder
-
-    e = vit_base_patch16(img_size=192)
-    d = VitDecoder()
-    x = torch.rand(2, 3, 192, 192)
-    y, mask, idx = e(x)
-    print(y.size())
-    y = d(y, idx)
-    print(y.size())

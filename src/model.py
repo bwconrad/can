@@ -1,5 +1,5 @@
 import os
-from typing import List, Optional, Tuple
+from typing import Optional, Tuple
 
 import pytorch_lightning as pl
 import torch

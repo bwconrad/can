@@ -4,7 +4,7 @@ import numpy as np
 import torch
 
 
-def get_1d_sincos_pos_embed(x, dim):
+def get_1d_sincos_pos_embed(x: torch.Tensor, dim: int):
     """From: https://github.com/lucidrains/denoising-diffusion-pytorch/blob/main/denoising_diffusion_pytorch/denoising_diffusion_pytorch.py"""
     half_dim = dim // 2
     emb = math.log(10000) / (half_dim - 1)
