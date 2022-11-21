@@ -22,3 +22,26 @@ python train.py --accelerator gpu --devices 1 --precision 16  --data.root path/t
 - Run `python train.py --help` for descriptions of all options.
 - `--model.encoder_name` can be one of `vit_tiny_patch16, vit_small_patch16, vit_base_patch16, vit_large_patch16, vit_huge_patch14`.
 
+#### Using a Pretrained Model
+Encoder weights can be extracted from a pretraining checkpoint file by running:
+```
+python scripts/extract_encoder_weights.py -c path/to/checkpoint/file
+```
+You can then initialize a ViT model with these weights with the following:
+```python
+import torch
+from timm.models.vision_transformer import VisionTransformer
+
+weights = torch.load("path/to/weights/file")
+
+# Assuming weights are for a ViT-b/16 model
+model = VisionTransformer(
+    patch_size=16,
+    embed_dim=768,
+    depth=12,
+    num_heads=12,
+)
+model.load_state_dict(weights)
+```
+- __Note__: `VisionTransformer` arguments should match the those used during pretraining (e.g. ViT-b/16, ViT-l/16, etc.).
+
