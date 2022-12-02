@@ -112,7 +112,7 @@ class VitDecoder(nn.Module):
         x = self.blocks(x)
 
         # Predict pixel values
-        x = self.head(x)
+        x = self.head(self.norm(x))
 
         return x[:, 1:, :]  # Don't return cls token
 
