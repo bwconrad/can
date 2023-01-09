@@ -95,12 +95,12 @@ class VitDecoder(nn.Module):
             temp, dim=1, index=repeat(idx_unshuffle, "b l -> b l d", d=D)
         )
 
-        # Prepend cls token
-        x = torch.cat([x[:, :1, :], temp], dim=1)
-
         # Add noise level embedding
         if p is not None:
             temp = temp + p[:, None, :]
+
+        # Prepend cls token
+        x = torch.cat([x[:, :1, :], temp], dim=1)
 
         # Project to decoder embed size
         x = self.embed(x)
