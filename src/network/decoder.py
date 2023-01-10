@@ -22,14 +22,18 @@ class VitDecoder(nn.Module):
         mlp_ratio: int = 4,
         norm_layer: nn.Module = partial(nn.LayerNorm, eps=1e-6),  # type:ignore
         act_layer: nn.Module = nn.GELU,  # type:ignore
+        embed_unmasked_tokens: bool = True,
     ):
         super().__init__()
+        self.embed_unmasked_tokens = embed_unmasked_tokens
 
         # Projection from encoder to decoder dim
         self.embed = nn.Linear(in_dim, embed_dim, bias=True)
 
         # Mask token
-        self.mask_token = nn.Parameter(torch.zeros(1, 1, in_dim))
+        self.mask_token = nn.Parameter(
+            torch.zeros(1, 1, in_dim if embed_unmasked_tokens else embed_dim)
+        )
 
         # Sin-cos position embedding
         self.pos_embed = nn.Parameter(
@@ -84,6 +88,10 @@ class VitDecoder(nn.Module):
         idx_unshuffle: torch.Tensor,
         p: Optional[torch.Tensor] = None,
     ):
+        if not self.embed_unmasked_tokens:
+            # Project only masked tokens to decoder embed size
+            x = self.embed(x)
+
         # Append mask tokens to input
         L = idx_unshuffle.shape[1]
         B, L_unmasked, D = x.shape
@@ -102,8 +110,9 @@ class VitDecoder(nn.Module):
         # Prepend cls token
         x = torch.cat([x[:, :1, :], temp], dim=1)
 
-        # Project to decoder embed size
-        x = self.embed(x)
+        if self.embed_unmasked_tokens:
+            # Project masked and unmasked tokens to decoder embed size
+            x = self.embed(x)
 
         # Add pos embed
         x = x + self.pos_embed

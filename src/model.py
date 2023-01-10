@@ -25,6 +25,7 @@ class CANModel(pl.LightningModule):
         decoder_embed_dim: int = 512,
         decoder_depth: int = 8,
         decoder_num_heads: int = 16,
+        decoder_embed_unmasked_tokens: bool = True,
         projector_hidden_dim: int = 4096,
         projector_out_dim: int = 128,
         noise_embed_in_dim: int = 768,
@@ -53,6 +54,8 @@ class CANModel(pl.LightningModule):
             decoder_embed_dim: Embed dim of decoder
             decoder_depth: Number of transformer blocks in the decoder
             decoder_num_heads: Number of attention heads in the decoder
+            decoder_embed_unmasked_tokens: Apply decoder embedding layer on both masked and unmasked tokens.
+                Else only apply to masked tokens
             projector_hidden_dim: Hidden dim of projector
             projector_out_dim: Output dim of projector
             noise_embed_in_dim: Dim of noise level sinusoidal embedding
@@ -80,6 +83,7 @@ class CANModel(pl.LightningModule):
         self.decoder_embed_dim = decoder_embed_dim
         self.decoder_depth = decoder_depth
         self.decoder_num_heads = decoder_num_heads
+        self.decoder_embed_unmasked_tokens = decoder_embed_unmasked_tokens
         self.projector_hidden_dim = projector_hidden_dim
         self.projector_out_dim = projector_out_dim
         self.noise_embed_in_dim = noise_embed_in_dim
@@ -111,6 +115,7 @@ class CANModel(pl.LightningModule):
             embed_dim=self.decoder_embed_dim,
             depth=self.decoder_depth,
             num_heads=self.decoder_num_heads,
+            embed_unmasked_tokens=self.decoder_embed_unmasked_tokens,
         )
         self.projector = nn.Sequential(
             nn.Linear(self.encoder.embed_dim, self.projector_hidden_dim),
@@ -126,7 +131,12 @@ class CANModel(pl.LightningModule):
         self.noise_embed = nn.Sequential(
             nn.Linear(self.noise_embed_in_dim, self.noise_embed_hidden_dim),
             nn.ReLU(),
-            nn.Linear(self.noise_embed_hidden_dim, self.encoder.embed_dim),
+            nn.Linear(
+                self.noise_embed_hidden_dim,
+                self.encoder.embed_dim
+                if self.decoder_embed_unmasked_tokens
+                else self.decoder_embed_dim,
+            ),
         )
 
         # Change to channel last memory format
